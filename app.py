@@ -73,10 +73,19 @@ meta_path = os.path.join(base_dir, 'metadata.json')
 
 @st.cache_resource
 def load_resources():
-    with open(model_path, 'rb') as f:
-        pipe = pickle.load(f)
-    with open(meta_path, 'r', encoding='utf-8') as f:
-        meta = json.load(f)
+    try:
+        with open(model_path, 'rb') as f:
+            pipe = pickle.load(f)
+        with open(meta_path, 'r', encoding='utf-8') as f:
+            meta = json.load(f)
+    except Exception:
+        # Resilient fallback: auto-train on cloud if pickle version differs
+        from train_model import main as train_pipeline
+        train_pipeline()
+        with open(model_path, 'rb') as f:
+            pipe = pickle.load(f)
+        with open(meta_path, 'r', encoding='utf-8') as f:
+            meta = json.load(f)
     return pipe, meta
 
 try:
